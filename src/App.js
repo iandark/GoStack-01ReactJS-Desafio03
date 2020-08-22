@@ -1,31 +1,50 @@
-import React from "react";
-
+import React, { useState, useEffect } from "react";
 import "./styles.css";
+import api from "./services/api";
 
 function App() {
-  async function handleAddRepository() {
-    // TODO
-  }
+    const [repositories, setRepositories] = useState([]);
 
-  async function handleRemoveRepository(id) {
-    // TODO
-  }
+    useEffect(() => {
+        api.get("repositories").then((response) => {
+            setRepositories(response.data);
+        });
+    }, []);
 
-  return (
-    <div>
-      <ul data-testid="repository-list">
-        <li>
-          Repositório 1
+    async function handleAddRepository() {
+        const response = await api.post("repositories", {
+            title: `Teste ${Date.now()}`,
+            url: "https://github.com/iandark/GoStack-NodeJS",
+            techs: ["NodeJS", "Express", "Nodemon"],
+        });
 
-          <button onClick={() => handleRemoveRepository(1)}>
-            Remover
-          </button>
-        </li>
-      </ul>
+        const repository = response.data;
+        setRepositories([...repositories, repository]);
+    }
 
-      <button onClick={handleAddRepository}>Adicionar</button>
-    </div>
-  );
+    async function handleRemoveRepository(id) {
+        api.delete(`repositories/${id}`).then(() =>
+            setRepositories(
+                repositories.filter((repository) => repository.id !== id)
+            )
+        );
+    }
+
+    return (
+        <>
+            <button onClick={handleAddRepository}>Adicionar</button>
+            <ul data-testid="repository-list">
+                {repositories.map(({ id, title }) => (
+                    <li key={id}>
+                        {title}
+                        <button onClick={() => handleRemoveRepository(id)}>
+                            Remover
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </>
+    );
 }
 
 export default App;
